@@ -312,6 +312,13 @@ impl Config {
     }
 }
 
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum OptionalPath {
+    Path(PathBuf),
+    Optional { path: PathBuf, optional: bool },
+}
+
 #[derive(Deserialize)]
 struct RawConfig {
     #[serde(flatten)]
@@ -342,6 +349,8 @@ pub struct AndroidConfig {
     pub gradle: bool,
     #[serde(default)]
     pub wry: bool,
+    #[serde(default)]
+    pub assets: Vec<OptionalPath>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]

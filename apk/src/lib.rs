@@ -3,7 +3,7 @@ use crate::res::Chunk;
 use anyhow::{Context, Result};
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
-use xcommon::{Scaler, ScalerOpts, Zip, ZipFile, ZipFileOptions};
+use xcommon::{Scaler, ScalerOpts, Zip, ZipFileOptions};
 
 mod compiler;
 pub mod manifest;
@@ -77,14 +77,31 @@ impl Apk {
         Ok(())
     }
 
+    pub fn add_asset(&mut self, asset: &Path) -> Result<()> {
+        let file_name = asset
+            .file_name()
+            .context("Asset must have file_name component")?;
+        let dest = Path::new("assets").join(file_name);
+        // TODO: uncompressed (more specifically, aligned) assets map _much_ faster
+        // TODO: Also check NDK AASSET_MODE_STREAMING vs AASSET_MODE_BUFFER
+        if asset.is_dir() {
+            tracing::info!("Embedding asset directory `{}`", asset.display());
+            self.zip
+                .add_directory(asset, &dest, ZipFileOptions::Aligned(4096))
+        } else {
+            tracing::info!("Embedding asset file `{}`", asset.display());
+            self.zip
+                .add_file(asset, &dest, ZipFileOptions::Aligned(4096))
+        }
+        .with_context(|| format!("While zipping `{}`", asset.display()))?;
+
+        Ok(())
+    }
+
     pub fn add_dex(&mut self, dex: &Path) -> Result<()> {
         self.zip
             .add_file(dex, Path::new("classes.dex"), ZipFileOptions::Compressed)?;
         Ok(())
-    }
-
-    pub fn add_zip_file(&mut self, f: ZipFile) -> Result<()> {
-        self.zip.add_zip_file(f)
     }
 
     pub fn add_lib(&mut self, target: Target, path: &Path) -> Result<()> {
@@ -100,13 +117,13 @@ impl Apk {
         )
     }
 
-    pub fn add_file(&mut self, source: &Path, dest: &Path, opts: ZipFileOptions) -> Result<()> {
-        self.zip.add_file(source, dest, opts)
-    }
+    // pub fn add_file(&mut self, source: &Path, dest: &Path, opts: ZipFileOptions) -> Result<()> {
+    //     self.zip.add_file(source, dest, opts)
+    // }
 
-    pub fn add_directory(&mut self, source: &Path, dest: &Path) -> Result<()> {
-        self.zip.add_directory(source, dest)
-    }
+    // pub fn add_directory(&mut self, source: &Path, dest: &Path, opts: ZipFileOptions) -> Result<()> {
+    //     self.zip.add_directory(source, dest, opts)
+    // }
 
     pub fn finish(self, signer: Option<Signer>) -> Result<()> {
         self.zip.finish()?;

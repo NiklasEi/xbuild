@@ -1,4 +1,5 @@
 use crate::cargo::CrateType;
+use crate::config::OptionalPath;
 use crate::download::DownloadManager;
 use crate::task::TaskRunner;
 use crate::{BuildEnv, Format, Opt, Platform};
@@ -82,6 +83,28 @@ pub fn build(env: &BuildEnv) -> Result<()> {
                     env.target().opt() != Opt::Debug,
                 )?;
                 apk.add_res(env.icon(), &env.android_jar())?;
+
+                for asset in &env.config().android().assets {
+                    match asset {
+                        OptionalPath::Path(path)
+                        | OptionalPath::Optional {
+                            path,
+                            optional: false,
+                        } => {
+                            let path = env.cargo().package_root().join(path);
+                            apk.add_asset(&path)?
+                        }
+                        OptionalPath::Optional {
+                            path,
+                            optional: true,
+                        } => {
+                            let path = env.cargo().package_root().join(path);
+                            if path.exists() {
+                                apk.add_asset(&path)?
+                            }
+                        }
+                    }
+                }
 
                 if has_lib {
                     for target in env.target().compile_targets() {
@@ -256,6 +279,7 @@ pub fn build(env: &BuildEnv) -> Result<()> {
                 ipa.add_directory(
                     &app,
                     &Path::new("Payload").join(format!("{}.app", env.name())),
+                    ZipFileOptions::Compressed,
                 )?;
                 ipa.finish()?;
             }
