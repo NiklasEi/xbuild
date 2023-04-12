@@ -78,6 +78,9 @@ impl Apk {
     }
 
     pub fn add_asset(&mut self, asset: &Path) -> Result<()> {
+        // const OPTIONS: ZipFileOptions = ZipFileOptions::Aligned(4096);
+        const OPTIONS: ZipFileOptions = ZipFileOptions::Compressed;
+
         let file_name = asset
             .file_name()
             .context("Asset must have file_name component")?;
@@ -86,12 +89,10 @@ impl Apk {
         // TODO: Also check NDK AASSET_MODE_STREAMING vs AASSET_MODE_BUFFER
         if asset.is_dir() {
             tracing::info!("Embedding asset directory `{}`", asset.display());
-            self.zip
-                .add_directory(asset, &dest, ZipFileOptions::Aligned(4096))
+            self.zip.add_directory(asset, &dest, OPTIONS)
         } else {
             tracing::info!("Embedding asset file `{}`", asset.display());
-            self.zip
-                .add_file(asset, &dest, ZipFileOptions::Aligned(4096))
+            self.zip.add_file(asset, &dest, OPTIONS)
         }
         .with_context(|| format!("While zipping `{}`", asset.display()))?;
 
