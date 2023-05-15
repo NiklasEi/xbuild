@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use serde::Deserialize;
 use std::{
     borrow::Cow,
@@ -111,16 +111,13 @@ impl EnvOption {
                 value,
                 relative: true,
                 force: _,
-            } => {
-                let value = config_parent.as_ref().join(value);
-                let value = dunce::canonicalize(&value)
-                    .with_context(|| format!("Failed to canonicalize `{}`", value.display()))?;
-                value
-                    .into_os_string()
-                    .into_string()
-                    .map_err(VarError::NotUnicode)?
-                    .into()
-            }
+            } => config_parent
+                .as_ref()
+                .join(value)
+                .into_os_string()
+                .into_string()
+                .map_err(VarError::NotUnicode)?
+                .into(),
             Self::String(value) | Self::Value { value, .. } => value.into(),
         })
     }
