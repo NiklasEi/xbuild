@@ -10,7 +10,7 @@ mod utils;
 
 pub use artifact::{Artifact, CrateType};
 
-use self::config::Config;
+use self::config::LocalizedConfig;
 use self::manifest::Manifest;
 use crate::{CompileTarget, Opt};
 
@@ -74,11 +74,10 @@ impl Cargo {
 
         // TODO: Find, parse, and merge _all_ config files following the hierarchical structure:
         // https://doc.rust-lang.org/cargo/reference/config.html#hierarchical-structure
-        let config = Config::find_cargo_config_for_workspace(package_root)?;
-        // TODO: Import LocalizedConfig code from cargo-subcommand and propagate `[env]`
-        // if let Some(config) = &config {
-        //     config.set_env_vars().unwrap();
-        // }
+        let config = LocalizedConfig::find_cargo_config_for_workspace(package_root)?;
+        if let Some(config) = &config {
+            config.set_env_vars().unwrap();
+        }
 
         let target_dir = target_dir
             .or_else(|| {
@@ -101,7 +100,7 @@ impl Cargo {
                 .unwrap_or_else(|| &manifest_path)
                 .parent()
                 .unwrap()
-                .join(utils::get_target_dir_name(config.as_ref()).unwrap())
+                .join(utils::get_target_dir_name(config.as_deref()).unwrap())
         });
 
         Ok(Self {
