@@ -92,7 +92,11 @@ pub fn build(env: &BuildEnv) -> Result<()> {
                             path,
                             optional: false,
                         } => {
-                            let paths = glob(path.as_os_str().to_str()?)?;
+                            let paths = glob(
+                                path.as_os_str()
+                                    .to_str()
+                                    .context("Failed to convert path to str")?,
+                            )?;
                             for path in paths {
                                 let path = env.cargo().package_root().join(path?);
                                 apk.add_asset(&path)?
@@ -102,7 +106,11 @@ pub fn build(env: &BuildEnv) -> Result<()> {
                             path,
                             optional: true,
                         } => {
-                            let paths = glob(path.as_os_str().to_str()?)?;
+                            let paths = glob(
+                                path.as_os_str()
+                                    .to_str()
+                                    .context("Failed to convert path to str")?,
+                            )?;
                             for glob_result in paths {
                                 if let Ok(path) = glob_result {
                                     let path = env.cargo().package_root().join(path);
