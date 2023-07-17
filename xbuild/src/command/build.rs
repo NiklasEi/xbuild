@@ -7,6 +7,7 @@ use anyhow::{Context, Result};
 use apk::Apk;
 use appbundle::AppBundle;
 use appimage::AppImage;
+use glob::glob;
 use msix::Msix;
 use std::collections::HashSet;
 use std::ffi::OsStr;
@@ -91,16 +92,24 @@ pub fn build(env: &BuildEnv) -> Result<()> {
                             path,
                             optional: false,
                         } => {
-                            let path = env.cargo().package_root().join(path);
-                            apk.add_asset(&path)?
+                            let paths = glob(path.as_os_str().to_str()?)?;
+                            for path in paths {
+                                let path = env.cargo().package_root().join(path?);
+                                apk.add_asset(&path)?
+                            }
                         }
                         OptionalPath::Optional {
                             path,
                             optional: true,
                         } => {
-                            let path = env.cargo().package_root().join(path);
-                            if path.exists() {
-                                apk.add_asset(&path)?
+                            let paths = glob(path.as_os_str().to_str()?)?;
+                            for glob_result in paths {
+                                if let Ok(path) = glob_result {
+                                    let path = env.cargo().package_root().join(path);
+                                    if path.exists() {
+                                        apk.add_asset(&path)?
+                                    }
+                                }
                             }
                         }
                     }

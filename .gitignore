@@ -7,3 +7,5 @@ embedded.mobileprovision
 examples/helloworld/build
 examples/helloworld/target
 examples/raqote-winit/target
+
+.idea/
