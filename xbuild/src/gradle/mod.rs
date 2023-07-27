@@ -8,6 +8,8 @@ static BUILD_GRADLE: &[u8] = include_bytes!("./build.gradle");
 static GRADLE_PROPERTIES: &[u8] = include_bytes!("./gradle.properties");
 static SETTINGS_GRADLE: &[u8] = include_bytes!("./settings.gradle");
 static IC_LAUNCHER: &[u8] = include_bytes!("./ic_launcher.xml");
+static DUMMY_CPP: &[u8] = include_bytes!("./dummy.cpp");
+static DUMMY_CMAKE_LISTS: &[u8] = include_bytes!("./CMakeLists.txt");
 
 pub fn prepare(env: &BuildEnv) -> Result<()> {
     let config = env.config().android();
@@ -38,6 +40,7 @@ pub fn build(env: &BuildEnv, out: &Path) -> Result<()> {
     let gradle = platform_dir.join("gradle");
     let app = gradle.join("app");
     let main = app.join("src").join("main");
+    let dummy_cpp = main.join("cpp");
     let kotlin = main.join("kotlin");
     let jnilibs = main.join("jniLibs");
     let res = main.join("res");
@@ -46,6 +49,11 @@ pub fn build(env: &BuildEnv, out: &Path) -> Result<()> {
     std::fs::write(gradle.join("build.gradle"), BUILD_GRADLE)?;
     std::fs::write(gradle.join("gradle.properties"), GRADLE_PROPERTIES)?;
     std::fs::write(gradle.join("settings.gradle"), SETTINGS_GRADLE)?;
+
+    // this is so gradle includes libc++_shared.so
+    std::fs::create_dir_all(&dummy_cpp)?;
+    std::fs::write(dummy_cpp.join("dummy.cpp"), DUMMY_CPP)?;
+    std::fs::write(app.join("CMakeLists.txt"), DUMMY_CMAKE_LISTS)?;
 
     let config = env.config().android();
     let mut manifest = config.manifest.clone();
@@ -82,6 +90,21 @@ pub fn build(env: &BuildEnv, out: &Path) -> Result<()> {
                     targetSdk {target_sdk}
                     versionCode {version_code}
                     versionName '{version_name}'
+                    externalNativeBuild {{
+                        cmake {{
+                            arguments "-DANDROID_STL=c++_shared"
+                        }}
+                    }}
+                }}
+                sourceSets {{
+                    main {{
+                        assets.srcDirs = ['../../../../../../assets']
+                    }}
+                }}
+                externalNativeBuild {{
+                    cmake {{
+                        path "CMakeLists.txt"
+                    }}
                 }}
             }}
             dependencies {{
@@ -164,6 +187,7 @@ pub fn build(env: &BuildEnv, out: &Path) -> Result<()> {
         Format::Apk => "assemble",
         _ => unreachable!(),
     });
+    cmd.arg("--warning-mode").arg("all");
     task::run(cmd, true)?;
     let output = gradle
         .join("app")
