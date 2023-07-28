@@ -90,6 +90,9 @@ pub fn build(env: &BuildEnv, out: &Path) -> Result<()> {
                     targetSdk {target_sdk}
                     versionCode {version_code}
                     versionName '{version_name}'
+                    ndk {{
+                        abiFilters 'arm64-v8a', 'armeabi-v7a'
+                    }}
                     externalNativeBuild {{
                         cmake {{
                             arguments "-DANDROID_STL=c++_shared"
