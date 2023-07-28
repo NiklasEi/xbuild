@@ -130,8 +130,7 @@ pub fn build(env: &BuildEnv, out: &Path) -> Result<()> {
             ("h", 72),
             ("xh", 96),
             ("xxh", 144),
-            ("xxh", 192),
-            ("xxxh", 256),
+            ("xxxh", 192),
         ];
         for (name, size) in dpis {
             let dir_name = format!("mipmap-{}dpi", name);
