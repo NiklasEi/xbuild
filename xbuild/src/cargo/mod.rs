@@ -280,7 +280,12 @@ impl CargoBuild {
         })
     }
 
-    pub fn use_android_ndk(&mut self, path: &Path, target_sdk_version: u32) -> Result<()> {
+    pub fn use_android_ndk(
+        &mut self,
+        path: &Path,
+        target_sdk_version: u32,
+        target: &CompileTarget,
+    ) -> Result<()> {
         let path = dunce::canonicalize(path)?;
         let ndk_triple = self.target.ndk_triple();
         self.cfg_tool(Tool::Cc, "clang");
@@ -297,7 +302,7 @@ impl CargoBuild {
             target_sdk_version
         );
         self.use_ld("lld");
-        self.add_link_arg("--target=aarch64-linux-android");
+        self.add_link_arg(&format!("--target={}", target.rust_triple()?));
         self.add_link_arg(&format!("-B{}", sdk_lib_dir.display()));
         self.add_link_arg(&format!("-L{}", sdk_lib_dir.display()));
         self.add_link_arg(&format!("-L{}", lib_dir.display()));
