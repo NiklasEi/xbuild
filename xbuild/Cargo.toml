@@ -2,8 +2,9 @@
 name = "xbuild"
 version = "0.2.0"
 edition = "2021"
+publish = false
 description = "Builds rust mobile/desktop projects."
-repository = "https://github.com/rust-mobile/xbuild"
+repository = "https://github.com/NiklasEi/xbuild"
 license = "Apache-2.0 OR MIT"
 
 [dependencies]
