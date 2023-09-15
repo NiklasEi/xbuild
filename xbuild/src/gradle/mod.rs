@@ -63,6 +63,7 @@ pub fn build(env: &BuildEnv, out: &Path) -> Result<()> {
     let min_sdk = manifest.sdk.min_sdk_version.take().unwrap();
     let version_code = manifest.version_code.take().unwrap();
     let version_name = manifest.version_name.take().unwrap();
+    let assets_folder = manifest.assets_folder.take().unwrap();
 
     manifest.compile_sdk_version = None;
     manifest.compile_sdk_version_codename = None;
@@ -101,7 +102,7 @@ pub fn build(env: &BuildEnv, out: &Path) -> Result<()> {
                 }}
                 sourceSets {{
                     main {{
-                        assets.srcDirs = ['../../../../../../assets']
+                        assets.srcDirs = ['../../../../../../{assets_folder}']
                     }}
                 }}
                 externalNativeBuild {{
@@ -120,6 +121,7 @@ pub fn build(env: &BuildEnv, out: &Path) -> Result<()> {
         version_code = version_code,
         version_name = version_name,
         dependencies = dependencies,
+        assets_folder = assets_folder,
     );
 
     if let Some(icon_path) = env.icon.as_ref() {
