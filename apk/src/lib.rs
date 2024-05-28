@@ -81,7 +81,7 @@ impl Apk {
         let file_name = asset
             .file_name()
             .context("Asset must have file_name component")?;
-        let dest = Path::new("assets").join(file_name);
+        let dest = Path::new(self.manifest.assets_folder.take().unwrap().as_str()).join(file_name);
         if asset.is_dir() {
             tracing::info!("Embedding asset directory `{}`", asset.display());
             self.zip.add_directory(asset, &dest, opts)

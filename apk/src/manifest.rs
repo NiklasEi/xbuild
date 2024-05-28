@@ -33,6 +33,8 @@ pub struct AndroidManifest {
     pub uses_permission: Vec<Permission>,
     #[serde(default)]
     pub application: Application,
+    #[serde(default)]
+    pub assets_folder: Option<String>,
 }
 
 impl Default for AndroidManifest {
@@ -50,6 +52,7 @@ impl Default for AndroidManifest {
             compile_sdk_version_codename: Default::default(),
             platform_build_version_code: Default::default(),
             platform_build_version_name: Default::default(),
+            assets_folder: Some("assets".to_string()),
         }
     }
 }
