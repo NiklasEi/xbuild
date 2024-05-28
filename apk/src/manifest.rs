@@ -52,7 +52,7 @@ impl Default for AndroidManifest {
             compile_sdk_version_codename: Default::default(),
             platform_build_version_code: Default::default(),
             platform_build_version_name: Default::default(),
-            assets_folder: Some("assets".to_string())
+            assets_folder: Some("assets".to_string()),
         }
     }
 }
