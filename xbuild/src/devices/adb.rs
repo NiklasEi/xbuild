@@ -98,6 +98,7 @@ impl Adb {
             .shell(device, None)
             .arg("am")
             .arg("start")
+            .arg("-W")
             .arg("-a")
             .arg("android.intent.action.MAIN")
             .arg("-n")
@@ -205,6 +206,25 @@ impl Adb {
         Ok(line[..18].to_string())
     }
 
+    fn pidof(&self, device_serial: &str, id: &str) -> Result<u32> {
+        let output = self
+            .shell(device_serial, None)
+            .arg("pidof")
+            .arg(id)
+            .output()?;
+
+        anyhow::ensure!(
+            output.status.success(),
+            "adb pidof exited with code {:?}: {}",
+            output.status.code(),
+            std::str::from_utf8(&output.stderr)?.trim()
+        );
+
+        let output = std::str::from_utf8(&output.stdout)?;
+        let pid = output.trim().to_owned();
+        Ok(pid.parse()?)
+    }
+
     fn uidof(&self, device: &str, id: &str) -> Result<u32> {
         let output = self
             .shell(device, None)
@@ -227,13 +247,16 @@ impl Adb {
         Ok(uid.parse()?)
     }
 
-    fn logcat(&self, device: &str, uid: u32, last_timestamp: &str) -> Result<Logcat> {
+    fn logcat(&self, device: &str, pid: u32, last_timestamp: &str) -> Result<Logcat> {
         let child = self
             .shell(device, None)
             .arg("logcat")
             .arg("-T")
             .arg(format!("'{}'", last_timestamp))
-            .arg(format!("--uid={}", uid))
+            .arg("-v")
+            .arg("color")
+            .arg(format!("--pid={}", pid.to_string()))
+            // .arg(format!("--uid={}", uid))
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .spawn()?;
@@ -345,8 +368,9 @@ impl Adb {
         self.forward_reverse(device, debug_config)?;
         let last_timestamp = self.logcat_last_timestamp(device)?;
         self.start(device, package, activity)?;
-        let uid = self.uidof(device, package)?;
-        let logcat = self.logcat(device, uid, &last_timestamp)?;
+        // let uid = self.uidof(device, package)?;
+        let pid = self.pidof(device, package)?;
+        let logcat = self.logcat(device, pid, &last_timestamp)?;
         for line in logcat {
             println!("{}", line);
         }
